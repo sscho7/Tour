@@ -4,7 +4,7 @@ import pydeck as pdk
 
 # 데이터 로드
 file_path = 'https://raw.githubusercontent.com/sscho7/Tour/refs/heads/main/2025-TourCos.csv'  # 엑셀 파일의 경로
-data = pd.read_excel(file_path, sheet_name='여행코스')
+data = pd.read_excel(file_path, sheet_name='2025-TourCos')
 
 # 데이터를 지도 포맷으로 처리
 map_data = data[['명칭', '위도', '경도', '소요시간']].dropna()
