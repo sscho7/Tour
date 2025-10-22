@@ -12,7 +12,7 @@ st.title("명칭을 선택하면 소요시간을 보여줍니다")
 # ✅ GitHub에 있는 CSV 파일 불러오기
 URL = "https://raw.githubusercontent.com/sscho7/Tour/main/2025-TourCos.csv"
 try:
-    df = pd.read_csv(URL, encoding="cp949")
+    df = pd.read_csv(URL)
     st.success("GitHub에서 데이터를 성공적으로 불러왔습니다 ✅")
 except Exception as e:
     st.error(f"데이터를 불러오는 중 오류 발생: {e}")
