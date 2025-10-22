@@ -10,7 +10,7 @@ import textwrap
 st.set_page_config(page_title="명칭 -> 소요시간", layout="centered")
 st.title("명칭을 선택하면 소요시간을 보여줍니다")
 
-csv_path = "https://raw.githubusercontent.com/sscho7/Tour/blob/main/2025-TourCos.csv", encoding="cp949
+csv_path = "https://raw.githubusercontent.com/sscho7/Tour/blob/main/2025-TourCos.csv", encoding="cp949")
 if uploaded is not None:
     try:
         df = pd.read_csv(uploaded)
