@@ -3,7 +3,7 @@ import pandas as pd
 import pydeck as pdk
 
 # 데이터 로드
-file_path = 'data.xlsx'  # 엑셀 파일의 경로
+file_path = 'https://raw.githubusercontent.com/sscho7/Tour/refs/heads/main/2025-TourCos.csv'  # 엑셀 파일의 경로
 data = pd.read_excel(file_path, sheet_name='여행코스')
 
 # 데이터를 지도 포맷으로 처리
