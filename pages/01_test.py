@@ -2,72 +2,76 @@ import streamlit as st
 import pandas as pd
 import pydeck as pdk
 
-# 데이터 로드
-URL = "https://raw.githubusercontent.com/sscho7/Tour/main/2025-TourCos.csv"
-try:
-    data = pd.read_csv(URL)
-except Exception as e:
-    st.error(f"데이터를 불러오는 중 오류가 발생했습니다: {e}")
-    st.stop()
+CSV_URL = 'https://raw.githubusercontent.com/sscho7/Tour/main/2025-TourCos.csv'
 
-# 지도 표시용 데이터
-map_data = data[['명칭', '위도', '경도', '소요시간']].dropna()
+@st.cache_data
+def load_data():
+    df = pd.read_csv(CSV_URL)
+    df.columns = df.columns.str.strip()
+    return df
 
-st.title("여행 코스 선택 및 소요시간 조회")
-st.markdown("""사이드바에서 코스명 또는 소요시간으로 필터링 가능합니다.<br>
-지도에서 마우스를 올리면 각 코스의 정보가 나타납니다.""", unsafe_allow_html=True)
+df = load_data()
 
-with st.sidebar:
-    st.header("여행 코스 검색/필터")
-    search = st.text_input("코스명으로 검색")
-    filtered = map_data[map_data['명칭'].str.contains(search, case=False, na=False)]
-    min_time = int(map_data['소요시간'].min())
-    max_time = int(map_data['소요시간'].max())
-    time_from, time_to = st.slider("소요 시간 (분) 범위 선택", min_time, max_time, (min_time, max_time))
-    filtered = filtered[(filtered['소요시간'] >= time_from) & (filtered['소요시간'] <= time_to)]
+st.title("🚗 2025 여행 코스 정보")
 
-if not filtered.empty:
-    select_title = st.selectbox("여행 코스를 선택하세요.", filtered['명칭'].unique())
-    selected_row = filtered[filtered['명칭'] == select_title].iloc[0]
-    st.subheader("선택한 여행 코스 정보")
-    st.table(pd.DataFrame(selected_row).T)
-else:
-    st.warning("필터링 결과가 없습니다. 검색어나 필터 조건을 다시 확인하세요.")
-    selected_row = None
+# 컬럼명 확인
+st.caption("컬럼명(디버깅용):")
+st.write(df.columns.tolist())
 
-if not filtered.empty:
-    v_state = pdk.ViewState(
-        latitude=float(filtered['위도'].mean()),
-        longitude=float(filtered['경도'].mean()),
-        zoom=11 if len(filtered) > 1 else 13
-    )
+# 위도/경도 컬럼의 존재 확인
+if '위도' in df.columns and '경도' in df.columns:
+    # 결측치 제거 및 타입 변환
+    df['위도'] = pd.to_numeric(df['위도'], errors='coerce')
+    df['경도'] = pd.to_numeric(df['경도'], errors='coerce')
+    df_map = df.dropna(subset=['위도', '경도']).copy()
 
-    color_col = [255, 80, 120, 160]
+    st.subheader("🗺 여행 코스 지도")
+    # pydeck Layer
     layer = pdk.Layer(
         "ScatterplotLayer",
-        data=filtered,
+        data=df_map,
         get_position='[경도, 위도]',
-        get_fill_color=color_col,
-        get_radius=160,
+        get_color='[200, 30, 0, 160]',
+        get_radius=200,
         pickable=True
     )
-    st.pydeck_chart(
-        pdk.Deck(
-            layers=[layer],
-            initial_view_state=v_state,
-            tooltip={"text": "{명칭}\n소요시간: {소요시간}분"}
-        )
+    view_state = pdk.ViewState(
+        longitude=float(df_map['경도'].mean()),
+        latitude=float(df_map['위도'].mean()),
+        zoom=11
     )
+    r = pdk.Deck(
+        layers=[layer],
+        initial_view_state=view_state,
+        tooltip={
+            "html": "<b>{명칭}</b><br/>"
+                    "<b>여행일정:</b> {여행일정}<br/>"
+                    "<b>총거리:</b> {총거리}<br/>"
+                    "<b>소요시간:</b> {소요시간}<br/>"
+                    "<b>상세 정보:</b> {상세 정보}"
+        }
+    )
+    st.pydeck_chart(r)
+
+    st.info("지도 위 마커를 클릭하면 세부 정보가 표시됩니다.")
+
 else:
-    st.info("지도를 표시할 데이터가 없습니다.")
+    st.warning('CSV 파일에 "위도", "경도" 컬럼(열)이 추가되어야 지도에 마커가 표시됩니다!')
 
-st.subheader("여행 코스 데이터 (검색/필터 결과 포함)")
-st.dataframe(filtered if not filtered.empty else data)
+# 아래는 상세 정보 또는 데이터 전체 보기
+name_list = df['명칭'].dropna().unique().tolist()
+selected_name = st.selectbox("여행 코스를 선택하세요.", name_list)
 
-csv = (filtered if not filtered.empty else data).to_csv(index=False)
-st.download_button(
-    label="→ 현재 조회된 데이터 CSV 다운로드",
-    data=csv,
-    file_name="tour_course_filtered.csv",
-    mime="text/csv"
-)
+if selected_name:
+    row = df[df['명칭'] == selected_name].iloc[0]
+    st.markdown("---")
+    st.header(f"📍 {row['명칭']}")
+    st.markdown(f"**여행일정:** {row['여행일정']}")
+    st.markdown(f"**총거리:** {row['총거리']}")
+    st.markdown(f"**소요시간:** {row['소요시간']}")
+    st.markdown(f"**상세정보:** {row['상세 정보']}")
+else:
+    st.info("여행 코스를 선택하면 상세 정보가 나타납니다.")
+
+with st.expander("🔎 전체 데이터프레임 보기"):
+    st.dataframe(df)
