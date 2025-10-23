@@ -28,8 +28,8 @@ if selected_name:
     st.header(f"📍 {row['명칭']}")
     st.markdown(f"**여행일정:** {row['여행일정']}")
     st.markdown(f"**총거리:** {row['총 거리']}")
-   # st.markdown(f"**소요시간:** {row['소요 시간']}")
-   # st.markdown(f"**상세정보:** {row['상세정보']}")   # ←←← 반드시 띄어쓰기 반영!
+    st.markdown(f"**소요시간:** {row['소요 시간']}")
+    st.markdown(f"**상세정보:** {row['상세정보']}")   # ←←← 반드시 띄어쓰기 반영!
 else:
     st.info("여행 코스를 선택하면 상세 정보가 나타납니다.")
 
