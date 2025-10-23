@@ -3,9 +3,9 @@ import pandas as pd
 import pydeck as pdk
 
 # 데이터 로드
-file_url = 'https://raw.githubusercontent.com/sscho7/Tour/refs/heads/main/2025-TourCos.csv'
+URL = "https://raw.githubusercontent.com/sscho7/Tour/main/2025-TourCos.csv"
 try:
-    data = pd.read_csv(file_url)
+    data = pd.read_csv(URL)
 except Exception as e:
     st.error(f"데이터를 불러오는 중 오류가 발생했습니다: {e}")
     st.stop()
