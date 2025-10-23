@@ -63,7 +63,7 @@ if selected_name:
     st.markdown(f"**여행일정:** {row['여행일정']}")
     st.markdown(f"**총거리:** {row['총 거리']}")
     st.markdown(f"**소요시간:** {row['소요시간']}")
-    st.markdown(f"**상세정보:** {row['상세 정보']}")
+    st.markdown(f"**상세정보:** {row['상세정보']}")
 
     # Google Map 미리보기 내장 표시
     if '위도' in row and '경도' in row and pd.notnull(row['위도']) and pd.notnull(row['경도']):
