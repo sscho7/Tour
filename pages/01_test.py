@@ -46,9 +46,9 @@ if '위도' in df.columns and '경도' in df.columns:
         tooltip={
             "html": "<b>{명칭}</b><br/>"
                     "<b>여행일정:</b> {여행일정}<br/>"
-                    "<b>총거리:</b> {총거리}<br/>"
+                    "<b>총 거리:</b> {총 거리}<br/>"
                     "<b>소요시간:</b> {소요시간}<br/>"
-                    "<b>상세 정보:</b> {상세 정보}"
+                    "<b>상세정보:</b> {상세정보}"
         }
     )
     st.pydeck_chart(r)
