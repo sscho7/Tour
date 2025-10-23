@@ -1,38 +1,69 @@
 import streamlit as st
 import pandas as pd
+import pydeck as pdk
 
 CSV_URL = 'https://raw.githubusercontent.com/sscho7/Tour/main/2025-TourCos.csv'
 
 @st.cache_data
 def load_data():
     df = pd.read_csv(CSV_URL)
-    df.columns = df.columns.str.strip()  # 혹시 모를 앞뒤 공백, 탭, 줄바꿈 제거
+    df.columns = df.columns.str.strip()  # 컬럼명 정리
+    # 혹시 위도/경도가 문자라면 실수형으로 변환(예방적)
+    if '위도' in df.columns and '경도' in df.columns:
+        df['위도'] = pd.to_numeric(df['위도'], errors='coerce')
+        df['경도'] = pd.to_numeric(df['경도'], errors='coerce')
     return df
 
 df = load_data()
 
-st.title("🚗 2025 여행 코스 정보")
+st.title("🗺️ 2025 여행 코스 지도")
 
-# 실제 컬럼명을 출력해 확인한다
-st.caption("컬럼명(디버깅용):")
-st.write(df.columns.tolist())      # 여기에 ['명칭', '여행일정', ..., '상세 정보']처럼 나옵니다
+# 실제 컬럼명 확인(디버깅용)
+# st.caption("컬럼명(디버깅용):")
+# st.write(df.columns.tolist())
 
-# '명칭' 컬럼에서 고유값만 추출, 셀렉트박스 생성
-name_list = df['명칭'].dropna().unique().tolist()
-selected_name = st.selectbox("여행 코스를 선택하세요.", name_list)
+if '위도' in df.columns and '경도' in df.columns:
+    # pydeck 마커용 데이터 준비
+    df_map = df[['명칭', '여행일정', '총거리', '소요시간', '상세 정보', '위도', '경도']].dropna(subset=['위도', '경도'])
+    df_map = df_map.reset_index(drop=True)
 
-if selected_name:
-    row = df[df['명칭'] == selected_name].iloc[0]
+    # pydeck 레이어 정의
+    layer = pdk.Layer(
+        "ScatterplotLayer",
+        data=df_map,
+        get_position='[경도, 위도]',
+        get_color='[0, 100, 200, 160]',
+        get_radius=120,
+        pickable=True
+    )
 
-    st.markdown("---")
-    st.header(f"📍 {row['명칭']}")
-    st.markdown(f"**여행일정:** {row['여행일정']}")
-    st.markdown(f"**총거리:** {row['총 거리']}")
-    st.markdown(f"**소요시간:** {row['소요시간']}")
-    st.markdown(f"**상세정보:** {row['상세정보']}")   # ←←← 반드시 띄어쓰기 반영!
+    # 뷰포트(초기 중심) 지정: 첫번째 코스의 위치 기준
+    midpoint = (df_map['위도'].mean(), df_map['경도'].mean())
+    view_state = pdk.ViewState(
+        longitude=midpoint[1], latitude=midpoint[0], zoom=10, pitch=0
+    )
+
+    st.pydeck_chart(
+        pdk.Deck(
+            layers=[layer],
+            initial_view_state=view_state,
+            tooltip={
+                "html": """
+                    <b>{명칭}</b><br>
+                    <b>여행일정:</b> {여행일정}<br>
+                    <b>총거리:</b> {총거리}<br>
+                    <b>소요시간:</b> {소요시간}<br>
+                    <b>상세정보:</b> {상세 정보}
+                """,
+                "style": {"color": "white"}
+            }
+        )
+    )
+
+    st.write("지도의 위치 아이콘을 클릭하면 세부 정보가 나옵니다.")
 else:
-    st.info("여행 코스를 선택하면 상세 정보가 나타납니다.")
+    st.error('"위도" 및 "경도" 컬럼이 데이터에 필요합니다. CSV 파일에 두 컬럼을 추가해 주세요!')
 
-# 원본 데이터 전체 보기(선택적)
-with st.expander("🔎 전체 데이터프레임 보기"):
+# 데이터 전체 보기(선택)
+with st.expander("🔎 전체 데이터 보기"):
     st.dataframe(df)
