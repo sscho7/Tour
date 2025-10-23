@@ -2,6 +2,11 @@ import streamlit as st
 import pandas as pd
 import pydeck as pdk
 
+# Google Map 미리보기 embed 함수
+def show_google_map(lat, lon, zoom=16, width='100%', height=400):
+    url = f"https://www.google.com/maps?q={lat},{lon}&z={zoom}&output=embed"
+    st.components.v1.iframe(url, width=width, height=height, scrolling=False)
+
 CSV_URL = 'https://raw.githubusercontent.com/sscho7/Tour/main/2025-TourCos.csv'
 
 @st.cache_data
@@ -12,21 +17,14 @@ def load_data():
 
 df = load_data()
 
-st.title("🚗 2025 여행 코스 정보")
+st.title("🗺️ 2025 여행 코스 지도 & 상세정보")
 
-# 컬럼명 확인
-st.caption("컬럼명(디버깅용):")
-st.write(df.columns.tolist())
-
-# 위도/경도 컬럼의 존재 확인
+# 지도+마커 표시 (위도/경도 체크)
 if '위도' in df.columns and '경도' in df.columns:
-    # 결측치 제거 및 타입 변환
     df['위도'] = pd.to_numeric(df['위도'], errors='coerce')
     df['경도'] = pd.to_numeric(df['경도'], errors='coerce')
-    df_map = df.dropna(subset=['위도', '경도']).copy()
+    df_map = df.dropna(subset=['위도', '경도'])
 
-    st.subheader("🗺 여행 코스 지도")
-    # pydeck Layer
     layer = pdk.Layer(
         "ScatterplotLayer",
         data=df_map,
@@ -35,30 +33,26 @@ if '위도' in df.columns and '경도' in df.columns:
         get_radius=200,
         pickable=True
     )
+    midpoint = (df_map['위도'].mean(), df_map['경도'].mean())
     view_state = pdk.ViewState(
-        longitude=float(df_map['경도'].mean()),
-        latitude=float(df_map['위도'].mean()),
-        zoom=11
+        longitude=float(midpoint[1]), latitude=float(midpoint[0]), zoom=11
     )
-    r = pdk.Deck(
-        layers=[layer],
-        initial_view_state=view_state,
-        tooltip={
-            "html": "<b>{명칭}</b><br/>"
-                    "<b>여행일정:</b> {여행일정}<br/>"
-                    "<b>총 거리:</b> {총 거리}<br/>"
-                    "<b>소요시간:</b> {소요시간}<br/>"
-                    "<b>상세정보:</b> {상세정보}"
-        }
+    st.pydeck_chart(
+        pdk.Deck(
+            layers=[layer],
+            initial_view_state=view_state,
+            tooltip={
+                "html": "<b>{명칭}</b><br/>"
+                        "<b>여행일정:</b> {여행일정}<br/>"
+                        "<b>총거리:</b> {총 거리}<br/>"
+                        "<b>소요시간:</b> {소요시간}<br/>"
+                        "<b>상세 정보:</b> {상세 정보}"
+            }
+        )
     )
-    st.pydeck_chart(r)
+    st.info("지도 위 마커에 마우스를 올리면 주요 정보 툴팁이 표시됩니다.")
 
-    st.info("지도 위 마커를 클릭하면 세부 정보가 표시됩니다.")
-
-else:
-    st.warning('CSV 파일에 "위도", "경도" 컬럼(열)이 추가되어야 지도에 마커가 표시됩니다!')
-
-# 아래는 상세 정보 또는 데이터 전체 보기
+# 여행지 선택
 name_list = df['명칭'].dropna().unique().tolist()
 selected_name = st.selectbox("여행 코스를 선택하세요.", name_list)
 
@@ -67,11 +61,21 @@ if selected_name:
     st.markdown("---")
     st.header(f"📍 {row['명칭']}")
     st.markdown(f"**여행일정:** {row['여행일정']}")
-    st.markdown(f"**총 거리:** {row['총 거리']}")
+    st.markdown(f"**총거리:** {row['총 거리']}")
     st.markdown(f"**소요시간:** {row['소요시간']}")
-    st.markdown(f"**상세정보:** {row['상세정보']}")
+    st.markdown(f"**상세정보:** {row['상세 정보']}")
+
+    # Google Map 미리보기 내장 표시
+    if '위도' in row and '경도' in row and pd.notnull(row['위도']) and pd.notnull(row['경도']):
+        st.subheader("📌 실제 위치 주변 지도 미리보기 (Google Maps)")
+        show_google_map(row['위도'], row['경도'])
+        map_link = f"https://maps.google.com/?q={row['위도']},{row['경도']}"
+        st.markdown(f"[구글맵에서 크게 보기]({map_link})")
+    else:
+        st.info("이 코스는 위도/경도 정보가 없어 지도를 표시할 수 없습니다.")
+
 else:
-    st.info("여행 코스를 선택하면 상세 정보가 나타납니다.")
+    st.info("여행 코스를 선택하면 상세 정보와 실제 위치 지도가 표시됩니다.")
 
 with st.expander("🔎 전체 데이터프레임 보기"):
     st.dataframe(df)
