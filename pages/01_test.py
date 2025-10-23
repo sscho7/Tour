@@ -14,10 +14,8 @@ except Exception as e:
 map_data = data[['명칭', '위도', '경도', '소요시간']].dropna()
 
 st.title("여행 코스 선택 및 소요시간 조회")
-st.markdown("""
-사이드바에서 코스명 또는 소요시간으로 필터링 가능합니다.<br>
-지도에서 마우스를 올리면 각 코스의 정보가 나타납니다.
-""", unsafe_allow_html=True)
+st.markdown("""사이드바에서 코스명 또는 소요시간으로 필터링 가능합니다.<br>
+지도에서 마우스를 올리면 각 코스의 정보가 나타납니다.""", unsafe_allow_html=True)
 
 with st.sidebar:
     st.header("여행 코스 검색/필터")
