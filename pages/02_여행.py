@@ -26,7 +26,7 @@ if selected_name:
 
     st.markdown("---")
     st.header(f"📍 {row['명칭']}")
-    st.markdown(f"**여행일정:** {row['여행 일정']}")
+    st.markdown(f"**여행일정:** {row['여행일정']}")
     st.markdown(f"**총거리:** {row['총거리']}")
     st.markdown(f"**소요시간:** {row['소요시간']}")
     st.markdown(f"**상세정보:** {row['상세 정보']}")   # ←←← 반드시 띄어쓰기 반영!
